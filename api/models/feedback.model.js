@@ -56,3 +56,28 @@ feedbackSchema.index(
 );
 
 export const Feedback = mongoose.model('Feedback', feedbackSchema);
+
+
+
+const globalFeedbackConfigSchema = new mongoose.Schema({
+  isActive: {
+    type: Boolean,
+    default: true, // Initial state will be inactive
+    required: true
+  },
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+globalFeedbackConfigSchema.statics.getConfig = async function() {
+  let config = await this.findOne();
+  if (!config) config = await this.create({});
+  return config;
+};
+
+export const GlobalFeedbackConfig = mongoose.model(
+  'GlobalFeedbackConfig', 
+  globalFeedbackConfigSchema
+);

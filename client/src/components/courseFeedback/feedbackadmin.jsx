@@ -1,194 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import './feedback.css';
-
-const feedbackSections = [
-  {
-    id: 'course_content_section',
-    title: 'Course Content',
-    questions: [
-      { id: 'course_content', text: 'Relevance of course content to your program' },
-      { id: 'course_materials', text: 'Quality and accessibility of course materials' },
-      { id: 'course_organization', text: 'Organization and structure of the course' }
-    ]
-  },
-  {
-    id: 'faculty_evaluation_section',
-    title: 'Faculty Evaluation',
-    questions: [
-      { id: 'teaching_quality', text: 'Clarity of instruction and explanations' },
-      { id: 'faculty_knowledge', text: "Faculty's knowledge of the subject matter" },
-      { id: 'faculty_availability', text: "Faculty's availability and responsiveness" }
-    ]
-  },
-  {
-    id: 'assessment_section',
-    title: 'Assessment',
-    questions: [
-      { id: 'assessment_fairness', text: 'Fairness of assessments and grading' },
-      { id: 'feedback_quality', text: 'Quality and timeliness of feedback on assignments' }
-    ]
-  }
-];
+import newRequest from '../../utils/newRequest';
 
 const FeedbackAdmin = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Get all info from navigation state (passed from select page)
-  const {
-    courseName,
-    courseCode,
-    facultyId,
-    semester,
-    department,
-  } = location.state || {};
-
-  const [feedbackData, setFeedbackData] = useState([]);
-  const [statistics, setStatistics] = useState({});
-  const [activeSection, setActiveSection] = useState(feedbackSections[0].id);
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!courseCode) {
-      setError('Missing course information.');
-      setLoading(false);
-      return;
-    }
-    fetchFeedbackData();
-    // eslint-disable-next-line
-  }, [courseCode]);
+    const fetchStatus = async () => {
+      try {
+        setLoading(true);
+        const res = await newRequest.get('/feedback/admin/status');
+        setIsActive(res.data.isActive);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Could not load feedback status.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, []);
 
-  const fetchFeedbackData = async () => {
+  const handleToggle = async () => {
     try {
-      const response = await fetch(`/feedback/${courseCode}/${facultyId}`);
-      if (!response.ok) throw new Error('Failed to fetch feedback data');
-      const data = await response.json();
-      setFeedbackData(data.feedback || []);
-      setStatistics(data.statistics || {});
-      setLoading(false);
+      setSaving(true);
+      setError('');
+      const res = await newRequest.post('/feedback/admin/set', { 
+        active: !isActive 
+      });
+      setIsActive(res.data.isActive);
     } catch (err) {
-      setError('Failed to load feedback data');
-      setLoading(false);
+      setError(err.response?.data?.message || 'Could not update feedback status.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleSectionChange = (sectionId) => setActiveSection(sectionId);
-
-  const renderFeedbackForSection = () => {
-    const currentSection = feedbackSections.find(s => s.id === activeSection);
-    if (!currentSection) return null;
-
+  if (loading) {
     return (
-      <div className="feedback-responses">
-        <div className="section-statistics">
-          <h4>Question Statistics</h4>
-          <div className="question-stats-grid">
-            {currentSection.questions.map(question => (
-              <div key={question.id} className="question-stat-item">
-                <div className="question-stat-text">{question.text}</div>
-                <div className="question-stat-value">
-                  Average Rating: {statistics.questionStats?.[question.id]?.averageRating || 'N/A'}
-                  <span className="response-count">
-                    ({statistics.questionStats?.[question.id]?.responseCount || 0} responses)
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        {feedbackData.length > 0 && feedbackData.map(submission => {
-          // Find ratings for questions in this section
-          const sectionRatings = (submission.ratings || []).filter(r =>
-            currentSection.questions.some(q => q.id === r.questionId)
-          );
-          if (sectionRatings.length === 0) return null;
-          return (
-            <div key={submission._id} className="feedback-submission">
-              <div className="submission-header">
-                <span className="submitted-by">
-                  {submission.isAnonymous ? 'Anonymous' : (submission.student?.name || 'Student')}
-                </span>
-                <span className="submitted-on">
-                  {new Date(submission.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="submission-content">
-                {sectionRatings.map(rating => (
-                  <div key={rating.questionId} className="question-response">
-                    <div className="question-text">
-                      {currentSection.questions.find(q => q.id === rating.questionId)?.text}
-                    </div>
-                    <div className="rating-display">Rating: {rating.rating}/5</div>
-                  </div>
-                ))}
-                {submission.comments && (
-                  <div className="submission-comments">
-                    <strong>Comments:</strong> {submission.comments}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        <span className="ml-4 text-gray-600 text-lg">Loading status...</span>
       </div>
     );
-  };
-
-  if (loading) return <div className="loading">Loading feedback data...</div>;
+  }
 
   return (
-    <div className="feedback-view-container">
-      <button onClick={() => navigate('/acadAdmin/feedback')} className="back-button">
-        Back to Courses
-      </button>
-      <h2>
-        {courseName ? `${courseName} (${courseCode})` : 'Course Feedback'}
-      </h2>
-      <div className="course-meta">
-        {facultyId && <span><b>facultyId:</b> {facultyId}</span>}
-        {semester && <span><b>Semester:</b> {semester}</span>}
-        {department && <span><b>Department:</b> {department}</span>}
+    <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-16 mb-8">
+      <h1 className="text-3xl font-bold mb-6 text-pink-700">Global Feedback Control</h1>
+      {error && <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">{error}</div>}
+      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-pink-50 rounded-lg p-6 mb-6">
+        <div>
+          <span className="text-lg font-semibold text-gray-800">
+            Feedback is currently:{' '}
+            <span className={isActive ? "text-green-600" : "text-red-600"}>
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          </span>
+        </div>
+        
+        <button
+          className={`mt-4 md:mt-0 px-6 py-2 rounded font-semibold transition-colors ${
+            isActive 
+              ? "bg-red-500 text-white hover:bg-red-600 disabled:bg-red-300" 
+              : "bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300"
+          }`}
+          onClick={handleToggle}
+          disabled={saving}
+        >
+          {saving
+            ? (isActive ? 'Deactivating...' : 'Activating...')
+            : (isActive ? 'Deactivate Feedback' : 'Activate Feedback')}
+        </button>
       </div>
-      {error && <div className="error-message">{error}</div>}
-      {!feedbackData.length ? (
-        <div className="no-feedback-message">No feedback has been submitted for this course yet.</div>
-      ) : (
-        <>
-          <div className="feedback-statistics">
-            <div className="stat-card">
-              <div className="stat-value">{statistics.totalResponses}</div>
-              <div className="stat-label">Total Responses</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{statistics.responseRate}%</div>
-              <div className="stat-label">Response Rate</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{statistics.averageRating}</div>
-              <div className="stat-label">Average Rating</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{statistics.anonymousCount}</div>
-              <div className="stat-label">Anonymous Submissions</div>
-            </div>
-          </div>
-          <h3>Feedback Sections</h3>
-          <ul className="section-tabs">
-            {feedbackSections.map(section => (
-              <li
-                key={section.id}
-                className={activeSection === section.id ? 'active' : ''}
-                onClick={() => handleSectionChange(section.id)}
-              >
-                {section.title}
-              </li>
-            ))}
-          </ul>
-          <div className="feedback-display">{renderFeedbackForSection()}</div>
-        </>
-      )}
+
+      <p className="text-gray-600 text-sm mt-2">
+        This will {isActive ? 'disable' : 'enable'} feedback collection for <b>all courses</b> across the platform.
+      </p>
     </div>
   );
 };

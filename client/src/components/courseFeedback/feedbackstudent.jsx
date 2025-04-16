@@ -150,7 +150,7 @@ const FeedbackStudent = () => {
   };
 
   const handleCancel = () => {
-    navigate('/student/feedback');
+    navigate('/courses');
   };
 
   // UI

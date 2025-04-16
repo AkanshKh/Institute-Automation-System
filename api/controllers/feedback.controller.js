@@ -1,4 +1,4 @@
-import { Feedback } from '../models/feedback.model.js';
+import { Feedback , GlobalFeedbackConfig } from '../models/feedback.model.js';
 import { Course, FacultyCourse } from '../models/course.model.js';
 import { Faculty } from '../models/faculty.model.js';
 import { Student } from '../models/student.model.js';
@@ -265,3 +265,45 @@ export const getCourseDetails = async (req, res) => {
         });
     }
 };
+
+
+export const getGlobalstatus = async (req, res) => {
+    console.log("qwertyu");
+    try {
+      console.log("yaha ");  
+      const config = await GlobalFeedbackConfig.getConfig();
+      res.status(200).json({ isActive: config.isActive });
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to fetch feedback status',
+        error: error.message 
+      });
+    }
+  };
+  
+  export const setGlobalstatus = async (req, res) => {
+    try {
+      const { active } = req.body;
+      const config = await GlobalFeedbackConfig.getConfig();
+      
+      if (typeof active !== 'boolean') {
+        return res.status(400).json({ 
+          message: 'Invalid request: active must be a boolean' 
+        });
+      }
+  
+      config.isActive = active;
+      await config.save();
+      
+      res.status(200).json({ 
+        message: 'Feedback status updated',
+        isActive: config.isActive 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to update feedback status',
+        error: error.message 
+      });
+    }
+  };
+  
