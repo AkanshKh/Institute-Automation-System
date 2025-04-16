@@ -218,8 +218,8 @@ export const getStudentCourses = async (req, res) => {
         // });
 
         // Determine if feedback is available (implement your logic)
-        const isFeedbackAvailable = globalFeedbackActive && !feedbackExists;
-        
+        // const isFeedbackAvailable = globalFeedbackActive && !feedbackExists;
+        const isFeedbackAvailable = true;
         res.status(200).json({
             courses: validCourses,
             feedbackOpen: isFeedbackAvailable
