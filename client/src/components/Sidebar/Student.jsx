@@ -69,9 +69,9 @@ const Student = () => {
                                             Announcements
                                         </Link>
                                     </li> */}
-                                    <li>
+                                    {/* <li>
                                         <Link to="/student/feedback" className="text-gray-700 hover:text-gray-900">Feedback</Link>
-                                    </li>
+                                    </li> */}
                                 </ul>
                                 )}
                             </li>

@@ -36,9 +36,9 @@ const Faculty = () => {
 
                             </li>
 
-                            <li>
+                            {/* <li>
                                 <Link to="/faculty/feedback" className="text-gray-700 hover:text-gray-900">Feedback</Link>
-                            </li>
+                            </li> */}
                             <li>
                                 <Link to="/attendancelanding" className="text-gray-700 hover:text-gray-900">
                                 Attendance Tracking

@@ -3,6 +3,7 @@ import { Faculty } from '../models/faculty.model.js';
 import { Student } from '../models/student.model.js';
 import { StudentCourse } from '../models/course.model.js';
 import { User } from '../models/user.model.js';
+import { GlobalFeedbackConfig } from '../models/feedback.model.js';
 
   
   // Get faculty by IDs
@@ -112,7 +113,9 @@ try {
     );
     
     // Get feedback availability status (could be from settings or config)
-    const feedbackOpen = currentMonth >= 3 && currentMonth <= 5; // Open during April-June
+    // const feedbackOpen = currentMonth >= 3 && currentMonth <= 5; // Open during April-June
+    const globalConfig = await GlobalFeedbackConfig.getConfig();
+    const feedbackOpen = globalConfig.isActive;
     
     return res.status(200).json({
         courses: coursesWithDetails,

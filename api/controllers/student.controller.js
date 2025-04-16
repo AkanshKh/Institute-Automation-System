@@ -4,7 +4,7 @@ import { ApplicationDocument, Bonafide, Passport } from '../models/documents.mod
 import { Faculty } from '../models/faculty.model.js';
 import { CourseDropRequest } from '../models/courseDropRequest.model.js';
 import { User } from '../models/user.model.js';
-
+import { Feedback , GlobalFeedbackConfig } from '../models/feedback.model.js';
 // Get basic student info
 export const getStudent = async (req, res) => {
     try {
@@ -168,6 +168,10 @@ export const getStudentCourses = async (req, res) => {
             });
         }
 
+        // // Get global feedback status
+        // const globalConfig = await GlobalFeedbackConfig.getConfig();
+        // const globalFeedbackActive = globalConfig.isActive;
+
         // console.log(`Courses enrolled by student:`, studentCourses);
         
         // Get course details and faculty information
@@ -205,8 +209,16 @@ export const getStudentCourses = async (req, res) => {
         const validCourses = courses.filter(course => course !== null);
         console.log(`Returning ${validCourses.length} valid courses`);
         
+
+        // Check if feedback already submitted for this student, course, and faculty
+        // const feedbackExists = await Feedback.findOne({
+        //     student: student._id,
+        //     course: course._id,
+        //     faculty: facultyCourse.facultyId
+        // });
+
         // Determine if feedback is available (implement your logic)
-        const isFeedbackAvailable = false; // Placeholder
+        const isFeedbackAvailable = globalFeedbackActive && !feedbackExists;
         
         res.status(200).json({
             courses: validCourses,
