@@ -169,8 +169,8 @@ export const getStudentCourses = async (req, res) => {
         }
 
         // // Get global feedback status
-        // const globalConfig = await GlobalFeedbackConfig.getConfig();
-        // const globalFeedbackActive = globalConfig.isActive;
+        const globalConfig = await GlobalFeedbackConfig.getConfig();
+        const globalFeedbackActive = globalConfig.isActive;
 
         // console.log(`Courses enrolled by student:`, studentCourses);
         
@@ -190,6 +190,24 @@ export const getStudentCourses = async (req, res) => {
                 console.log("Faculty course details fetched:", facultyCourse);
                 // .populate('facultyId', 'name');
                 
+                // Added feedback active logic here
+                let feedbackOpen = false;
+                if (globalFeedbackActive && facultyCourse && facultyCourse.facultyId) {
+                    // Get the faculty document to use the correct ObjectId
+                    const faculty = await Faculty.findById(facultyCourse.facultyId);
+                    if (faculty) {
+                        // Check if feedback already exists for this student-course-faculty combination
+                        const feedbackExists = await Feedback.findOne({
+                            student: student._id,
+                            course: course._id,
+                            faculty: faculty._id
+                        });
+                        // Set feedbackOpen to true if feedback doesn't exist
+                        feedbackOpen = !feedbackExists;
+                        console.log("already submitted",feedbackExists);
+                    }
+                }
+
                 // Use placeholder values for some fields
                 return {
                     id: course.courseCode,
@@ -198,7 +216,8 @@ export const getStudentCourses = async (req, res) => {
                     credits: course.credits,
                     assignments: 8, // Placeholder
                     announcements: course.announcements.length,
-                    attendance: 85 // Placeholder
+                    attendance: 85, // Placeholder
+                    feedbackOpen: feedbackOpen
                 };
             })
         );
@@ -209,20 +228,8 @@ export const getStudentCourses = async (req, res) => {
         const validCourses = courses.filter(course => course !== null);
         console.log(`Returning ${validCourses.length} valid courses`);
         
-
-        // Check if feedback already submitted for this student, course, and faculty
-        // const feedbackExists = await Feedback.findOne({
-        //     student: student._id,
-        //     course: course._id,
-        //     faculty: facultyCourse.facultyId
-        // });
-
-        // Determine if feedback is available (implement your logic)
-        // const isFeedbackAvailable = globalFeedbackActive && !feedbackExists;
-        const isFeedbackAvailable = true;
         res.status(200).json({
-            courses: validCourses,
-            feedbackOpen: isFeedbackAvailable
+            courses: validCourses
         });
         
     } catch (error) {

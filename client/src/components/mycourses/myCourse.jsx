@@ -19,7 +19,7 @@ function MyCourses() {
   const {data:userData} = JSON.parse(localStorage.getItem("currentUser"));
   const {userId} = userData.user;
   
-  const [isFeedbackAvailable, setIsFeedbackAvailable] = useState(false);
+  // const [isFeedbackAvailable, setIsFeedbackAvailable] = useState(false);
 
   // console.log("User ID:", userId);
 
@@ -28,7 +28,7 @@ function MyCourses() {
     queryFn: () =>
       newRequest.get(`/student/${userId}/courses`).then((res) => {
         console.log("Course data received:", res.data);
-        setIsFeedbackAvailable(res.data.feedbackOpen || false);
+        // setIsFeedbackAvailable(res.data.feedbackOpen || false);
         return res.data.courses || [];
       }),
   });
@@ -149,7 +149,7 @@ function MyCourses() {
                     <span>Attendance</span>
                   </Link>
                   
-              {1 ? (// isFeedbackAvailable will be used here
+              {course.feedbackOpen ? (// isFeedbackAvailable will be used here
                   <button
                     onClick={() => handleFeedback(course)}
                     className="flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-md p-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition duration-200"
@@ -207,11 +207,11 @@ function MyCourses() {
       
       
       {/* Feedback availability notice */}
-      {!isFeedbackAvailable && studentCourses.length > 0 && (
+      {/* {!isFeedbackAvailable && studentCourses.length > 0 && (
         <div className="mt-4 text-center text-sm text-gray-600">
           Course feedback is currently closed. Check back during the feedback period.
         </div>
-      )}
+      )} */}
     </div>
   );
 }
